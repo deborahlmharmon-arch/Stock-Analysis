@@ -492,7 +492,7 @@ def show_overview():
     indices_data = get_indices()
     cols = st.columns(4)
     
-    for i, (name, data) in enumerate(indices_data.items()):
+for i, (name, data) in enumerate(indices_data.items()):
     with cols[i]:
         if data is not None and not data.empty and len(data) >= 2:
             try:
