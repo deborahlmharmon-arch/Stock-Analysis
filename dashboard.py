@@ -487,34 +487,35 @@ def show_overview():
     
     st.markdown("---")
     
-    # --- MARKET INDICES ROW ---
-    st.subheader("Market Indices")
-    indices_data = get_indices()
-    cols = st.columns(4)
-    
+# --- MARKET INDICES ROW ---
+st.subheader("Market Indices")
+indices_data = get_indices()
+cols = st.columns(4)
+
+if indices_data:
     for i, (name, data) in enumerate(indices_data.items()):
-    with cols[i]:
-        if data is not None and not data.empty and len(data) >= 2:
-            try:
-                fig = create_candlestick_chart(data, name, 250)
-                if fig is not None:
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    current = float(data['Close'].iloc[-1])
-                    prev = float(data['Close'].iloc[-2])
-                    change = ((current - prev) / prev) * 100
-                    if change >= 0:
-                        st.write(f"**${current:.2f}** 🟢 {change:+.2f}%")
+        with cols[i]:
+            if data is not None and not data.empty and len(data) >= 2:
+                try:
+                    fig = create_candlestick_chart(data, name, 250)
+                    if fig is not None:
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        current = float(data['Close'].iloc[-1])
+                        prev = float(data['Close'].iloc[-2])
+                        change = ((current - prev) / prev) * 100
+                        if change >= 0:
+                            st.write(f"**${current:.2f}** 🟢 {change:+.2f}%")
+                        else:
+                            st.write(f"**${current:.2f}** 🔴 {change:+.2f}%")
                     else:
-                        st.write(f"**${current:.2f}** 🔴 {change:+.2f}%")
-                else:
-                    st.write(f"**{name}** - Chart unavailable")
-            except Exception as e:
-                st.write(f"**{name}** - Error loading data")
-        else:
-            st.write(f"**{name}** - No data available")
-    
-    st.markdown("---")
+                        st.write(f"**{name}** - Chart unavailable")
+                except Exception as e:
+                    st.write(f"**{name}** - Error loading data")
+            else:
+                st.write(f"**{name}** - No data available")
+else:
+    st.warning("Market indices data temporarily unavailable. Please refresh.")
     
     # --- MARKET ANALYSIS ROW: VIX + Bollinger Bands ---
     col_left, col_right = st.columns(2)
