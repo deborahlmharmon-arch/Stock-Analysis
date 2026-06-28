@@ -101,10 +101,15 @@ def get_indices():
     result = {}
     for name, symbol in indices.items():
         try:
-            # Use yf.download instead of Ticker.history for more reliable data
-            data = yf.download(symbol, period="7d", interval="1d")
+            # Use Ticker object with a different approach
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period="5d")
             if data is not None and not data.empty and len(data) >= 2:
-                result[name] = data
+                # Ensure we have the required columns
+                if 'Open' in data.columns and 'Close' in data.columns:
+                    result[name] = data
+                else:
+                    result[name] = None
             else:
                 result[name] = None
         except Exception as e:
