@@ -101,13 +101,13 @@ def get_indices():
     result = {}
     for name, symbol in indices.items():
         try:
-            ticker = yf.Ticker(symbol)
-            data = ticker.history(period="1mo", interval="1d")
-            if data is not None and not data.empty:
+            # Use yf.download instead of Ticker.history for more reliable data
+            data = yf.download(symbol, period="7d", interval="1d")
+            if data is not None and not data.empty and len(data) >= 2:
                 result[name] = data
             else:
                 result[name] = None
-        except:
+        except Exception as e:
             result[name] = None
     return result
 
@@ -875,7 +875,7 @@ def show_analysis(ticker):
     st.markdown("---")
     st.markdown(f"""
         <div class="footer">
-            Built by [Your Name] | Data provided by Yahoo Finance
+            Built by Deborah Harmon | Data provided by Yahoo Finance
             <br>Updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
         </div>
     """, unsafe_allow_html=True)
