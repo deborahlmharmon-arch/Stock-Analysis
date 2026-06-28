@@ -101,18 +101,13 @@ def get_indices():
     result = {}
     for name, symbol in indices.items():
         try:
-            # Use Ticker object with a different approach
             ticker = yf.Ticker(symbol)
-            data = ticker.history(period="5d")
-            if data is not None and not data.empty and len(data) >= 2:
-                # Ensure we have the required columns
-                if 'Open' in data.columns and 'Close' in data.columns:
-                    result[name] = data
-                else:
-                    result[name] = None
+            data = ticker.history(period="1mo", interval="1d")
+            if data is not None and not data.empty:
+                result[name] = data
             else:
                 result[name] = None
-        except Exception as e:
+        except:
             result[name] = None
     return result
 
@@ -178,16 +173,6 @@ def create_candlestick_chart(data, title, height=300):
     if data is None or data.empty:
         return None
     try:
-        # Ensure data has the required columns
-        required_cols = ['Open', 'High', 'Low', 'Close']
-        for col in required_cols:
-            if col not in data.columns:
-                return None
-        
-        # Ensure we have enough data
-        if len(data) < 2:
-            return None
-        
         fig = go.Figure(data=[go.Candlestick(
             x=data.index,
             open=data['Open'],
@@ -212,7 +197,7 @@ def create_candlestick_chart(data, title, height=300):
         fig.update_xaxes(showgrid=True, gridcolor=grid_color)
         fig.update_yaxes(showgrid=True, gridcolor=grid_color)
         return fig
-    except Exception as e:
+    except:
         return None
 
 def create_vix_chart(data):
@@ -503,31 +488,32 @@ def show_overview():
     
     st.markdown("---")
     
+    # --- MARKET INDICES ROW ---
+    st.subheader("Market Indices")
+    indices_data = get_indices()
+    cols = st.columns(4)
     
-def get_indices():
-    indices = {'DOW': '^DJI', 'NASDAQ': '^IXIC', 'S&P 500': '^GSPC', 'RUSSELL 2000': '^RUT'}
-    result = {}
-    for name, symbol in indices.items():
-        try:
-            # Try using Ticker with a longer period
-            ticker = yf.Ticker(symbol)
-            data = ticker.history(period="1mo")
-            if data is not None and not data.empty and len(data) >= 2:
-                # Check if we have the required columns
-                if all(col in data.columns for col in ['Open', 'High', 'Low', 'Close']):
-                    result[name] = data
-                else:
-                    result[name] = None
+    for i, (name, data) in enumerate(indices_data.items()):
+        with cols[i]:
+            if data is not None and not data.empty:
+                try:
+                    fig = create_candlestick_chart(data, name, 250)
+                    if fig is not None:
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        current = float(data['Close'].iloc[-1])
+                        prev = float(data['Close'].iloc[0])
+                        change = ((current - prev) / prev) * 100
+                        if change >= 0:
+                            st.write(f"**${current:.2f}** 🟢 {change:+.2f}%")
+                        else:
+                            st.write(f"**${current:.2f}** 🔴 {change:+.2f}%")
+                    else:
+                        st.write(f"**{name}** - Chart unavailable")
+                except Exception as e:
+                    st.write(f"**{name}** - Error loading data")
             else:
-                # Try alternative method
-                data = yf.download(symbol, period="5d", interval="1d")
-                if data is not None and not data.empty and len(data) >= 2:
-                    result[name] = data
-                else:
-                    result[name] = None
-        except Exception as e:
-            result[name] = None
-    return result
+                st.write(f"**{name}** - No data available")
     
     st.markdown("---")
     
@@ -889,7 +875,7 @@ def show_analysis(ticker):
     st.markdown("---")
     st.markdown(f"""
         <div class="footer">
-            Built by Deborah Harmon | Data provided by Yahoo Finance
+            Built by [Your Name] | Data provided by Yahoo Finance
             <br>Updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
         </div>
     """, unsafe_allow_html=True)
