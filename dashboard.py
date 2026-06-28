@@ -494,31 +494,42 @@ def show_overview():
     st.markdown("---")
     
     # --- MARKET INDICES ROW ---
-    st.subheader("Market Indices")
-    indices_data = get_indices()
-    cols = st.columns(4)
-    
-    for i, (name, data) in enumerate(indices_data.items()):
-        with cols[i]:
-            if data is not None and not data.empty:
-                try:
-                    fig = create_candlestick_chart(data, name, 250)
-                    if fig is not None:
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        current = float(data['Close'].iloc[-1])
-                        prev = float(data['Close'].iloc[0])
-                        change = ((current - prev) / prev) * 100
-                        if change >= 0:
-                            st.write(f"**${current:.2f}** 🟢 {change:+.2f}%")
-                        else:
-                            st.write(f"**${current:.2f}** 🔴 {change:+.2f}%")
+    # --- MARKET INDICES ROW ---
+st.subheader("Market Indices")
+indices_data = get_indices()
+cols = st.columns(4)
+
+for i, (name, data) in enumerate(indices_data.items()):
+    with cols[i]:
+        if data is not None and not data.empty and len(data) >= 2:
+            try:
+                fig = create_candlestick_chart(data, name, 250)
+                if fig is not None:
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Use .iloc[-1] and .iloc[0] directly - these are pandas Series
+                    current = data['Close'].iloc[-1]
+                    prev = data['Close'].iloc[0]
+                    if isinstance(current, pd.Series):
+                        current = float(current.iloc[0])
                     else:
-                        st.write(f"**{name}** - Chart unavailable")
-                except Exception as e:
-                    st.write(f"**{name}** - Error loading data")
-            else:
-                st.write(f"**{name}** - No data available")
+                        current = float(current)
+                    if isinstance(prev, pd.Series):
+                        prev = float(prev.iloc[0])
+                    else:
+                        prev = float(prev)
+                    
+                    change = ((current - prev) / prev) * 100
+                    if change >= 0:
+                        st.write(f"**${current:.2f}** 🟢 {change:+.2f}%")
+                    else:
+                        st.write(f"**${current:.2f}** 🔴 {change:+.2f}%")
+                else:
+                    st.write(f"**{name}** - Chart unavailable")
+            except Exception as e:
+                st.write(f"**{name}** - Error loading data")
+        else:
+            st.write(f"**{name}** - No data available")
     
     st.markdown("---")
     
